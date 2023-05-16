@@ -39,7 +39,7 @@ def plot_info(total, cities, actions):
     plt.show()
 
 def hist_avg(ax, data, title):
-    ymax = 50
+    ymax = 25
     if title == 'deaths':
         x_range = (1000,200000)
     elif title == 'cumulative rewards': 
