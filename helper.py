@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
 import seaborn as sns
+import torch
 
 def plot_info(total, cities, actions):
 
@@ -154,7 +155,7 @@ def plot_comparison_toggle_factorized(toggle_training, toggle_evaluation, traini
 
     fig.tight_layout()
 
-def evaluation_50_episodes(agent):
+def evaluation_50_episodes(agent,env,device,dyn):
     # Initializing the seeds for reproducibility purposes
     seeds = range(1,51)
 
@@ -165,6 +166,7 @@ def evaluation_50_episodes(agent):
     isol_days = []
     vacc_days = []
     hosp_days = []
+    log = []
 
     # Looping over 50 episodes
     for i_episode in range(50):
@@ -197,7 +199,7 @@ def evaluation_50_episodes(agent):
             if past_action['hospital'] == True:
                 hospital_weeks_count += 1 
 
-            action = agent.act(state, DECREASE_FLAG, False, i_episode)
+            action = agent.act(state, False, False, i_episode)
             obs, reward, done, info = env.step(action.item())
             R_cumulative += reward.item()
 
@@ -232,7 +234,7 @@ def evaluation_50_episodes(agent):
         
     return conf_days, isol_days, vacc_days, hosp_days, rewards, deaths
 
-def heatmap(agent, num_actions, action_names, model_name):
+def heatmap(agent, num_actions, action_names, model_name, env,device=torch.device('cpu')):
     # Initializing the seeds for reproducibility purposes
     seed = 1999
 
@@ -252,7 +254,7 @@ def heatmap(agent, num_actions, action_names, model_name):
             col = agent.policy_net(state).squeeze(0).detach().numpy() #[batch_size, num_actions]
         Qvalues[:, t] = col
         
-        action = agent.act(state, DECREASE_FLAG, False, i_episode)
+        action = agent.act(state, False, False, 1)
         obs, reward, done, info = env.step(action.item())
         R_cumulative += reward.item()
 
@@ -271,4 +273,4 @@ def heatmap(agent, num_actions, action_names, model_name):
             
     df = pd.DataFrame(Qvalues, index=action_names, columns=list(range(1,31)))
     sns.heatmap(df)
-    plt.title('{}'.format(model_name))
+    plt.title('Q values when using {}'.format(model_name))
