@@ -142,7 +142,7 @@ def plot_comparison_toggle_factorized(toggle_training, toggle_evaluation, traini
     
     e = [(evaluation[0][i] + evaluation[1][i] + evaluation[2][i])/3 for i in range(len(evaluation[0]))]
     
-    toggle_e = [(toggle_evaluation[0][i] + toggle_evaluation[1][i] + toggle_evaluation[2][i])/3 for i in range(len(toggle_evaluation[0]))]
+    e_toggle = [(toggle_evaluation[0][i] + toggle_evaluation[1][i] + toggle_evaluation[2][i])/3 for i in range(len(toggle_evaluation[0]))]
     
     ax_down.scatter(np.arange(len(training[0])), t, label='factorized training')
     ax_down.scatter(np.arange(len(training[0])), t_toggle, label='toggle training')
@@ -156,6 +156,7 @@ def plot_comparison_toggle_factorized(toggle_training, toggle_evaluation, traini
     fig.tight_layout()
 
 def evaluation_50_episodes(agent,env,device,dyn):
+    
     # Initializing the seeds for reproducibility purposes
     seeds = range(1,51)
 
@@ -178,6 +179,7 @@ def evaluation_50_episodes(agent,env,device,dyn):
         episode_log.append(info)
         state = torch.tensor(state, device=device)
 
+        # Initializing variable to keep trace of the cumulative reward
         R_cumulative = 0
 
         # Initializing confinement weeks count variable
@@ -234,7 +236,89 @@ def evaluation_50_episodes(agent,env,device,dyn):
         
     return conf_days, isol_days, vacc_days, hosp_days, rewards, deaths
 
-def heatmap(agent, num_actions, action_names, model_name, env,device=torch.device('cpu')):
+def evaluation_50_episodes_factorized(agent,env,device,dyn):
+
+    # Initializing the seeds for reproducibility purposes
+    seeds = range(1,51)
+
+    # Initializing useful variables to store results
+    rewards = []
+    deaths = []
+    conf_days = []
+    isol_days = []
+    vacc_days = []
+    hosp_days = []
+    log = []
+
+    # Looping over 50 episodes
+    for i_episode in range(50):
+
+        episode_log = []
+
+        # Initialize the environment and get its state (moving it to the device)
+        state, info = env.reset(seeds[i_episode])
+        episode_log.append(info)
+        state = torch.tensor(state, device=device)
+
+        # Initializing variable to keep trace of the cumulative reward
+        R_cumulative = 0
+
+        # Initializing confinement weeks count variable
+        confinement_weeks_count = 0
+        isolation_weeks_count = 0
+        vaccination_weeks_count = 0
+        hospital_weeks_count = 0
+
+
+        # We run an episode
+        for t in range(30):
+
+            past_action = dyn.get_action()
+            if past_action['confinement'] == True:
+                confinement_weeks_count += 1
+            if past_action['isolation'] == True:
+                isolation_weeks_count += 1
+            if past_action['vaccinate'] == True:
+                vaccination_weeks_count += 1
+            if past_action['hospital'] == True:
+                hospital_weeks_count += 1 
+
+            action = agent.act(state, DECREASE_FLAG, False, i_episode)
+            obs, reward, done, info = env.step(action)
+            R_cumulative += reward.item()
+
+            episode_log.append(info)
+
+            if done: # in our case it corresponds to 30 weeks
+                next_state = None
+            else:
+                next_state = torch.tensor(obs, device=device)
+
+            # Move to the next state
+            state = next_state
+
+            if done:
+                break
+
+        log.append(episode_log)
+
+        """ Parse the logs """
+        # Saving total number of confined days
+        conf_days.append(7 * confinement_weeks_count)
+        # Saving total number of confined days
+        isol_days.append(7 * isolation_weeks_count)
+        # Saving total number of confined days
+        vacc_days.append(7 * vaccination_weeks_count)
+        # Saving total number of confined days
+        hosp_days.append(7 * hospital_weeks_count)
+        # R_cumulative is computed in the inner loop
+        rewards.append(R_cumulative)
+        # Number of total deaths in the current episode
+        deaths.append(info.total.dead)
+        
+    return conf_days, isol_days, vacc_days, hosp_days, rewards, deaths
+
+def heatmap(agent, num_actions, action_names, model_name, env,device=torch.device('cpu'),factorized = False):
     # Initializing the seeds for reproducibility purposes
     seed = 1999
 
@@ -251,11 +335,21 @@ def heatmap(agent, num_actions, action_names, model_name, env,device=torch.devic
     for t in range(30):
         
         with torch.no_grad():
-            col = agent.policy_net(state).squeeze(0).detach().numpy() #[batch_size, num_actions]
+            
+            if not factorized:
+                col = agent.policy_net(state).squeeze(0).detach().numpy() #[num_actions]
+            else:
+                col = agent.policy_net(state).squeeze(0).detach().numpy() # 4 * 2
+            
         Qvalues[:, t] = col
         
         action = agent.act(state, False, False, 1)
-        obs, reward, done, info = env.step(action.item())
+        
+        if factorized:
+            obs, reward, done, info = env.step(action)
+        else:
+            obs, reward, done, info = env.step(action.item())
+            
         R_cumulative += reward.item()
 
         
