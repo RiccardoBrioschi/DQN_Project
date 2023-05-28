@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
-import seaborn as sns
+# import seaborn as sns
 import torch
 
 def plot_info(total, cities, actions):
@@ -119,20 +119,20 @@ def plot_comparison_toggle_factorized(toggle_training, toggle_evaluation, traini
 
     ax_upleft.scatter(np.arange(len(training[0])), training[0])
     ax_upleft.plot(np.linspace(0, num_episodes, len(evaluation[0])), evaluation[0], c='orange', marker='o', linestyle='-')
-    ax_upleft.plot(np.linspace(0, num_episodes, len(toggle_evaluation[0])), toggle_evaluation[0], c='green', marker='o', linestyle='-')
+    ax_upleft.plot(np.linspace(0, num_episodes, len(toggle_evaluation[0])), toggle_evaluation[0], c='red', marker='o', linestyle='-')
     ax_upleft.set_xlabel('episodes')
     ax_upleft.set_ylabel('total reward')
     ax_upleft.set_title('Training 1')
 
     ax_upcent.scatter(np.arange(len(training[1])), training[1], label='training 2')
     ax_upcent.plot(np.linspace(0, num_episodes, len(evaluation[1])), evaluation[1], c='orange', marker='o', linestyle='-')
-    ax_upleft.plot(np.linspace(0, num_episodes, len(toggle_evaluation[1])), toggle_evaluation[1], c='green', marker='o', linestyle='-')
+    ax_upcent.plot(np.linspace(0, num_episodes, len(toggle_evaluation[1])), toggle_evaluation[1], c='red', marker='o', linestyle='-')
     ax_upcent.set_xlabel('episodes')
     ax_upcent.set_title('Training 2')
 
     ax_upright.scatter(np.arange(len(training[2])), training[2], label='training 3')
     ax_upright.plot(np.linspace(0, num_episodes, len(evaluation[2])), evaluation[2], c='orange', marker='o', linestyle='-')
-    ax_upleft.plot(np.linspace(0, num_episodes, len(toggle_evaluation[2])), toggle_evaluation[2], c='green', marker='o', linestyle='-')
+    ax_upright.plot(np.linspace(0, num_episodes, len(toggle_evaluation[2])), toggle_evaluation[2], c='red', marker='o', linestyle='-')
     ax_upright.set_xlabel('episodes')
     ax_upright.set_title('Training 3')
 
@@ -145,9 +145,9 @@ def plot_comparison_toggle_factorized(toggle_training, toggle_evaluation, traini
     e_toggle = [(toggle_evaluation[0][i] + toggle_evaluation[1][i] + toggle_evaluation[2][i])/3 for i in range(len(toggle_evaluation[0]))]
     
     ax_down.scatter(np.arange(len(training[0])), t, label='factorized training')
-    ax_down.scatter(np.arange(len(training[0])), t_toggle, label='toggle training')
+    ax_down.scatter(np.arange(len(training[0])), t_toggle, c='green', label='toggle training')
     ax_down.plot(np.linspace(0, num_episodes, len(evaluation[0])), e, c='orange', marker='o', linestyle='-', label='factorized evaluation')
-    ax_down.plot(np.linspace(0, num_episodes, len(evaluation[0])), e_toggle, c='green', marker='o', linestyle='-', label='toggle evaluation')
+    ax_down.plot(np.linspace(0, num_episodes, len(evaluation[0])), e_toggle, c='red', marker='o', linestyle='-', label='toggle evaluation')
     ax_down.set_xlabel('episodes')
     ax_down.set_ylabel('total average reward')
     ax_down.legend()
@@ -283,7 +283,7 @@ def evaluation_50_episodes_factorized(agent,env,device,dyn):
             if past_action['hospital'] == True:
                 hospital_weeks_count += 1 
 
-            action = agent.act(state, DECREASE_FLAG, False, i_episode)
+            action = agent.act(state, False, False, i_episode)
             obs, reward, done, info = env.step(action)
             R_cumulative += reward.item()
 
