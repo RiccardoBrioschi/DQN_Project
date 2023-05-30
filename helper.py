@@ -340,7 +340,7 @@ def heatmap(agent, num_actions, action_names, model_name, env,device=torch.devic
                 col = agent.policy_net(state).squeeze(0).detach().numpy() #[num_actions]
             else:
                 col = agent.policy_net(state).squeeze(0).detach().numpy() # 4 * 2
-                col = col.reshape(num_actions) # the second column is appendend to the first one
+                col = col.T.reshape(num_actions) # the second column is appendend to the first one
             
         Qvalues[:, t] = col
         
