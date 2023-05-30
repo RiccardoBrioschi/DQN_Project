@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
-# import seaborn as sns
+import seaborn as sns
 import torch
 
 def plot_info(total, cities, actions):
@@ -340,6 +340,7 @@ def heatmap(agent, num_actions, action_names, model_name, env,device=torch.devic
                 col = agent.policy_net(state).squeeze(0).detach().numpy() #[num_actions]
             else:
                 col = agent.policy_net(state).squeeze(0).detach().numpy() # 4 * 2
+                col = col.reshape(num_actions) # the second column is appendend to the first one
             
         Qvalues[:, t] = col
         
