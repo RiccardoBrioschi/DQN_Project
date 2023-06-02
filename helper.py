@@ -367,5 +367,5 @@ def heatmap(agent, num_actions, action_names, model_name, env,device=torch.devic
             
             
     df = pd.DataFrame(Qvalues, index=action_names, columns=list(range(1,31)))
-    sns.heatmap(df)
+    sns.heatmap(df, cmap=sns.color_palette("viridis", as_cmap=True))
     plt.title('Q values when using {}'.format(model_name))
